@@ -96,6 +96,7 @@ input.num{font-family:var(--mono);text-align:right}
 .sl h3{font-size:2.9cqw;line-height:1.15;margin:0;font-weight:600;text-wrap:balance;letter-spacing:-.015em}
 .sl .ey{font-size:1.05cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--sl-accent);font-weight:600;margin-bottom:-.6cqw}
 .sl .rule{display:none}
+.sl .hd{position:absolute;right:4cqw;top:1.6cqw;font-size:1cqw;color:var(--sl-mute);letter-spacing:.05em}
 .sl .foot{position:absolute;left:4cqw;right:4cqw;bottom:1.4cqw;display:flex;justify-content:space-between;font-size:.95cqw;color:var(--sl-mute)}
 .sl .eyebrow{font-size:1.15cqw;letter-spacing:.2em;text-transform:uppercase;color:#8fd3d9}
 .sl .big{font-size:5.6cqw;font-weight:600;line-height:1.05;letter-spacing:-.02em;margin:0}
@@ -164,7 +165,7 @@ input.num{font-family:var(--mono);text-align:right}
 <script>
 // MODEL-START
 var SAMPLE = {
-  eng:{client:"Meridian Fund Services",provider:"Northbridge Delivery",quarter:"Q4 2026",period:"Oct to Dec 2026",next:"Q1 2027",presenter:"A. Rao, Delivery Lead",date:"2027-01-14",rag:"auto"},
+  eng:{client:"Meridian Fund Services",provider:"Northbridge Delivery",quarter:"Q4 2026",period:"Oct to Dec 2026",next:"Q1 2027",presenter:"A. Rao, Delivery Lead",date:"2027-01-14",rag:"auto",header:"Confidential",footer:"",nums:"yes"},
   band:2,
   kpis:[
     {name:"NAV published by 18:00",unit:"%",dir:"up",target:"99.5",actual:"99.7",prior:"99.1",note:""},
@@ -197,7 +198,7 @@ var SAMPLE = {
   summary:"Q4 was mostly on target. NAV delivery reached 99.7% and aged reconciliation breaks fell from 40 to 18. Three targets were missed or at risk: P1 incidents (4 against 2), settlement STP (96.4% against 97%) and onboarding (34 days against 30). Each has an owner and a date. We need three decisions from you by 31 January.",
   notes:{summary:"Open with the overall status, then the three misses. Do not bury them.",scorecard:"Walk the three non-green rows first. Expect: why did P1 incidents rise?",wins:"Lead with the reconciliation number. It is the clearest improvement.",issues:"Name the owner of each item. Ask the client owners to confirm the dates.",roadmap:"Point out that go-live depends on CR-14.",asks:"Ask for each decision in the room and note who answers."}
 };
-function blankState(){return{eng:{client:"",provider:"",quarter:"",period:"",next:"",presenter:"",date:"",rag:"auto"},band:2,
+function blankState(){return{eng:{client:"",provider:"",quarter:"",period:"",next:"",presenter:"",date:"",rag:"auto",header:"",footer:"",nums:"yes"},band:2,
   kpis:[{name:"",unit:"",dir:"up",target:"",actual:"",prior:"",note:""}],wins:[{title:"",impact:""}],
   issues:[{title:"",impact:"",sev:"Medium",owner:"",status:"Open",action:"",due:""}],roadmap:[{title:"",date:"",owner:""}],
   asks:[{title:"",why:"",from:"",by:""}],summary:"",notes:{summary:"",scorecard:"",wins:"",issues:"",roadmap:"",asks:""}}}
@@ -249,7 +250,8 @@ function buildSpec(s){
   chunk(as,4).forEach(function(c,i){sl.push({kind:"table",section:"asks",title:as.length+" decision"+(as.length>1?"s":"")+" needed from you"+(as[0]&&as[0].by?", the first by "+fmtDate(as[0].by):"")+(i?" (cont.)":""),notes:i?"":n.asks,
     cols:[{h:"Decision",w:6},{h:"Who decides",w:3.2},{h:"Needed by",w:2.9}],rows:c.map(function(x){return[{t:x.title,sub:x.why},{t:x.from},{t:fmtDate(x.by)}]})})});
   var EY={narrative:"Summary",kpis:"Scorecard",wins:"Wins",issues:"Issues and risks",roadmap:"Next quarter",asks:"Decisions"};sl.forEach(function(x){x.eyebrow=EY[x.section]||""});
-  return{slides:sl,cnt:cnt,rag:rag,sug:sug,total:total,ks:ks,wins:wins,iss:iss,rm:rm,as:as};
+  var hf={header:(e.header||"").trim(),footer:(e.footer&&e.footer.trim())||((e.client||"")+"  |  "+(e.quarter||"")+" QBR"),nums:e.nums!=="no"};
+  return{slides:sl,hf:hf,cnt:cnt,rag:rag,sug:sug,total:total,ks:ks,wins:wins,iss:iss,rm:rm,as:as};
 }
 function runChecks(s,spec){
   var o=[],add=function(sec,label,st,d){o.push({sec:sec,label:label,st:st,d:d||""})},e=s.eng;
@@ -305,8 +307,10 @@ function buildPptx(pres,spec,info){
       s.background={color:"FFFFFF"};
       s.addText((sl.eyebrow||"").toUpperCase(),{x:.6,y:.4,w:8,h:.3,fontFace:F,fontSize:11,bold:true,color:C.accent,charSpacing:4});
       s.addText(sl.title,{x:.6,y:.75,w:12.1,h:1.0,fontFace:F,fontSize:28,bold:true,color:C.ink,valign:"top"});
-      s.addText((info.client||"")+"  |  "+(info.quarter||"")+" QBR",{x:.6,y:7.0,w:8,h:.3,fontFace:F,fontSize:9,color:C.mute});
-      s.addText(String(i+1),{x:11.7,y:7.0,w:1,h:.3,fontFace:F,fontSize:9,color:C.mute,align:"right"});
+      var hf=spec.hf||{};
+      if(hf.header)s.addText(hf.header,{x:6.7,y:.4,w:6,h:.3,fontFace:F,fontSize:10,color:C.mute,align:"right"});
+      if(hf.footer)s.addText(hf.footer,{x:.6,y:7.0,w:9,h:.3,fontFace:F,fontSize:9,color:C.mute});
+      if(hf.nums)s.addText(String(i+1),{x:11.7,y:7.0,w:1,h:.3,fontFace:F,fontSize:9,color:C.mute,align:"right"});
       if(sl.kind==="summary"){
         s.addText((RAGW[sl.rag]||"").toUpperCase()+" OVERALL",{x:.6,y:1.9,w:2.8,h:.42,fontFace:F,fontSize:12,bold:true,color:"FFFFFF",fill:{color:rc[sl.rag]||C.mute},align:"center",charSpacing:3});
         s.addText(sl.text||"",{x:.6,y:2.5,w:10.4,h:2.3,fontFace:F,fontSize:20,color:C.ink,valign:"top",paraSpaceAfter:6});
@@ -368,7 +372,7 @@ function renderForm(){
   var e=S.eng,p="eng.";
   $("#form").innerHTML=
    '<nav class="nav" aria-label="Sections">'+[["engagement","Engagement"],["kpis","Scorecard"],["wins","Wins"],["issues","Issues"],["roadmap","Next quarter"],["asks","Decisions"],["narrative","Narrative"]].map(function(x){return'<button type="button" data-go="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</nav>'+
-   sec("engagement","Engagement","Who the review is for and when it takes place.",'<div class="grid">'+F("Client",p+"client",e.client)+F("Your team",p+"provider",e.provider)+F("Quarter",p+"quarter",e.quarter,{ph:"Q4 2026"})+F("Period",p+"period",e.period,{ph:"Oct to Dec 2026"})+F("Next quarter",p+"next",e.next,{ph:"Q1 2027"})+F("Review date",p+"date",e.date,{type:"date"})+F("Presenter",p+"presenter",e.presenter,{cls:"wide"})+'</div>')+
+   sec("engagement","Engagement","Who the review is for and when it takes place.",'<div class="grid">'+F("Client",p+"client",e.client)+F("Your team",p+"provider",e.provider)+F("Quarter",p+"quarter",e.quarter,{ph:"Q4 2026"})+F("Period",p+"period",e.period,{ph:"Oct to Dec 2026"})+F("Next quarter",p+"next",e.next,{ph:"Q1 2027"})+F("Review date",p+"date",e.date,{type:"date"})+F("Presenter",p+"presenter",e.presenter,{cls:"wide"})+F("Header (top right of each slide)",p+"header",e.header,{cls:"wide",ph:"e.g. Confidential"})+F("Footer (bottom left)",p+"footer",e.footer,{ph:"Blank uses client and quarter"})+F("Slide numbers",p+"nums",e.nums==="no"?"no":"yes",{opts:[["yes","Show"],["no","Hide"]]})+'</div>')+
    sec("kpis","Scorecard","Target against actual. Status is worked out for you, so a miss cannot be hidden by wording.",'<div id="l-kpis">'+listHtml("kpis")+'</div><button class="btn add" type="button" data-act="add" data-l="kpis">Add a measure</button>'+
      '<div class="inline"><label for="f-band">At risk means within</label><input id="f-band" data-p="band" type="text" class="num" inputmode="decimal" value="'+esc(S.band)+'"><span>% of the target</span></div>')+
    sec("wins","Wins","Three or four, each with a number.",'<div id="l-wins">'+listHtml("wins")+'</div><button class="btn add" type="button" data-act="add" data-l="wins">Add a win</button>')+
@@ -385,7 +389,7 @@ function renderForm(){
 function renderList(l){$("#l-"+l).innerHTML=listHtml(l)}
 
 function slideHtml(sl,i,n){
-  var foot=function(){return'<div class="foot"><span>'+esc(S.eng.client)+' | '+esc(S.eng.quarter)+' QBR</span><span>'+(i+1)+'</span></div>'};
+  var hf=SPEC.hf||{};var foot=function(){return'<div class="foot"><span>'+esc(hf.footer)+'</span><span>'+(hf.nums?(i+1):"")+'</span></div>'};var hd=function(){return hf.header?'<div class="hd">'+esc(hf.header)+'</div>':""};
   if(sl.kind==="title")return'<div class="sl dark"><div class="pad"><div class="eyebrow">Quarterly business review</div><p class="big">'+esc(sl.client)+'</p><p class="sub">'+esc([sl.quarter,sl.period].filter(Boolean).join("  |  "))+'</p><div class="meta">'+esc([sl.presenter,sl.provider,sl.date].filter(Boolean).join("  |  "))+'</div></div></div>';
   var body="";
   if(sl.kind==="summary"){var col={green:"var(--sl-good)",amber:"var(--sl-warn)",red:"var(--sl-bad)",none:"var(--sl-mute)"}[sl.rag];
@@ -395,7 +399,7 @@ function slideHtml(sl,i,n){
   else{var gt=sl.cols.map(function(c){return c.w+"fr"}).join(" ");
     body='<div class="tbl"><div class="tr h" style="grid-template-columns:'+gt+'">'+sl.cols.map(function(c){return'<div class="tc'+(c.al==="r"?" r":"")+'">'+esc(c.h)+'</div>'}).join("")+'</div>'+
       sl.rows.map(function(r){return'<div class="tr" style="grid-template-columns:'+gt+'">'+r.map(function(c,j){var inner=c.sub?'<b>'+esc(c.t)+'</b><small>'+esc(c.sub)+'</small>':esc(c.t);if(c.pill)inner='<span class="pl pl-'+(c.tone||"none")+'">'+inner+'</span>';return'<div class="tc'+(sl.cols[j].al==="r"?" r":"")+(c.tone&&!c.pill?" tone-"+c.tone:"")+'">'+inner+'</div>'}).join("")+'</div>'}).join("")+'</div>';}
-  return'<div class="sl"><div class="pad"><div class="ey">'+esc(sl.eyebrow||"")+'</div><h3>'+esc(sl.title)+'</h3>'+body+'</div>'+foot()+'</div>';
+  return'<div class="sl"><div class="pad"><div class="ey">'+esc(sl.eyebrow||"")+'</div><h3>'+esc(sl.title)+'</h3>'+body+'</div>'+hd()+foot()+'</div>';
 }
 function renderDeck(){
   var n=SPEC.slides.length;if(CUR>=n)CUR=n-1;if(CUR<0)CUR=0;
@@ -428,7 +432,7 @@ function fillStatic(){renderForm();updateRagNote();update()}
 /* events */
 $("#form").addEventListener("input",function(e){var p=e.target.dataset&&e.target.dataset.p;if(!p)return;setPath(S,p,e.target.value);update()});
 $("#form").addEventListener("change",function(e){var p=e.target.dataset&&e.target.dataset.p;if(!p)return;setPath(S,p,e.target.value);update()});
-$("#form").addEventListener("focusin",function(e){var s=e.target.closest&&e.target.closest("[data-sec]");if(s)showFor(s.dataset.sec)});
+$("#form").addEventListener("focusin",function(e){var s=e.target.closest&&e.target.closest("[data-sec]");if(s)showFor(/^f-eng-(header|footer|nums)$/.test(e.target.id)?"narrative":s.dataset.sec)});
 document.addEventListener("click",function(e){
   var t=e.target.closest("button,a");if(!t)return;
   if(t.dataset.go){var el=$("#sec-"+t.dataset.go);if(el){$("#app").dataset.view="edit";syncSeg();el.scrollIntoView({behavior:"smooth",block:"start"});showFor(t.dataset.go)}return}

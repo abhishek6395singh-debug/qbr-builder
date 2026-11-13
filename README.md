@@ -5,6 +5,7 @@ A single-page tool for preparing a client-facing quarterly business review. Fill
 - **Scorecard:** enter target, actual and last quarter for each measure. Met, At risk or Missed is calculated, and the overall Green, Amber or Red is suggested from it.
 - **Sections:** wins, issues and risks, next-quarter milestones, and the decisions you need from the client.
 - **Readiness checks:** about ten checks on the content, such as whether every miss has an explanation, every win has a number, every open issue has an owner, an action and a date, and every decision names who decides and by when.
+- **Header and footer:** set a header (for example "Confidential"), a footer and whether slide numbers show. They appear on every slide except the title slide, in the preview and in the PowerPoint. A blank footer uses the client name and quarter.
 - **Deck:** a live 16:9 preview, one slide per section, with long lists continuing on extra slides. Download as `.pptx` with your notes in the speaker notes.
 - **Draft with Claude (optional):** when the page is opened inside the Claude artifact viewer, a panel drafts the executive summary and speaker notes from your figures. Numbers in the draft that are not in your data are flagged before you apply it. This panel is hidden everywhere else.
 
