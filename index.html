@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>QBR Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: form on the left, live deck preview and readiness checks on the right. Slides are paper-white in both themes because the exported deck is. */
+:root{
+  --bg:#f3f6f6; --surface:#ffffff; --surface2:#eaf0f0; --fg:#14262e; --mute:#566a71; --line:#d3dcde;
+  --accent:#0b6f79; --accent-fg:#ffffff; --accent-soft:#d9eef0;
+  --good:#1b7f4f; --good-soft:#dcf1e6; --warn:#9a640f; --warn-soft:#f8ecd1; --bad:#b3342a; --bad-soft:#f8dedb;
+  --sl-bg:#ffffff; --sl-ink:#14262e; --sl-mute:#5b6b70; --sl-line:#d5dcdd; --sl-paper:#f1f4f4; --sl-dark:#14262e; --sl-accent:#0e7c86;
+  --sl-good:#1e8e5a; --sl-warn:#b7791f; --sl-bad:#c0392b;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1a1f; --surface:#15242a; --surface2:#1c2e35; --fg:#e5eeef; --mute:#9db1b6; --line:#2b4048;
+  --accent:#4fc3cc; --accent-fg:#06262a; --accent-soft:#17383d;
+  --good:#5cc78f; --good-soft:#143427; --warn:#e2b155; --warn-soft:#3a2f14; --bad:#f08379; --bad-soft:#40201d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1a1f; --surface:#15242a; --surface2:#1c2e35; --fg:#e5eeef; --mute:#9db1b6; --line:#2b4048;
+  --accent:#4fc3cc; --accent-fg:#06262a; --accent-soft:#17383d;
+  --good:#5cc78f; --good-soft:#143427; --warn:#e2b155; --warn-soft:#3a2f14; --bad:#f08379; --bad-soft:#40201d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--font);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{max-width:1380px;margin:0 auto;padding-block:18px 40px;display:grid;grid-template-columns:minmax(0,35rem) minmax(0,1fr);gap:24px;align-items:start}
+header.top{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brand h1{font-size:1.35rem;margin:0;font-weight:600;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--mute);font-size:.85rem}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 9px;font-size:.82rem}
+.btn:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:none;grid-column:1/-1;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{flex:1;border:0;background:transparent;padding:8px;cursor:pointer;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.left{display:flex;flex-direction:column;gap:14px;min-width:0}
+.right{position:sticky;top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:14px;min-width:0;max-height:calc(100vh - 24px);overflow:auto;padding-right:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.card h2{margin:0 0 2px;font-size:1rem;font-weight:600}
+.card .hint{margin:0 0 12px;color:var(--mute);font-size:.85rem}
+.nav{display:flex;flex-wrap:wrap;gap:6px}
+.nav button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;cursor:pointer;font-size:.82rem}
+.nav button:hover{border-color:var(--accent);color:var(--accent)}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr))}
+.grid .wide{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+label.f>span{font-size:.74rem;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=date],select,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:5px;padding:6px 8px;min-width:0}
+textarea{resize:vertical}
+input.num{font-family:var(--mono);text-align:right}
+.row{border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.row .head{display:flex;gap:8px;align-items:flex-end}
+.row .head .f{flex:1}
+.row .del{border:0;background:transparent;color:var(--mute);cursor:pointer;padding:6px;font-size:1.1rem;line-height:1}
+.row .del:hover{color:var(--bad)}
+.kgrid{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(5.2rem,1fr))}
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.76rem;font-weight:600;white-space:nowrap}
+.t-good{background:var(--good-soft);color:var(--good)}.t-warn{background:var(--warn-soft);color:var(--warn)}.t-bad{background:var(--bad-soft);color:var(--bad)}.t-none{background:var(--surface2);color:var(--mute)}
+.add{margin-top:10px}
+.inline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px;color:var(--mute);font-size:.85rem}
+.inline input{width:4.5rem}
+.sugg{font-size:.85rem;color:var(--mute);margin-top:8px}
+.ai{border:1px dashed var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;background:var(--accent-soft)}
+.ai p{margin:0 0 8px;font-size:.85rem}
+.ai .res{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.ai pre{white-space:pre-wrap;margin:0;font:inherit;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px}
+.flag{font-size:.84rem;padding:6px 8px;border-radius:6px}
+.stagewrap{display:flex;flex-direction:column;gap:8px}
+.stagebar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.stagebar .meta{color:var(--mute);font-size:.85rem}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.thumb{flex:0 0 132px;border:2px solid var(--line);border-radius:5px;padding:0;background:var(--surface);cursor:pointer;overflow:hidden;pointer-events:auto}
+.thumb[aria-current="true"]{border-color:var(--accent)}
+.thumb .sl{pointer-events:none}
+.checks h2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.checks ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.checks li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font-size:.88rem}
+.checks li .ic{width:1.35rem;height:1.35rem;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700}
+.checks li a{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:.8rem;margin-left:4px}
+.checks .d{color:var(--mute);display:block;font-size:.82rem}
+.small{font-size:.8rem;color:var(--mute)}
+/* slides */
+.sl{container-type:inline-size;aspect-ratio:16/9;background:var(--sl-bg);color:var(--sl-ink);position:relative;overflow:hidden;width:100%;border-radius:3px}
+.sl .pad{position:absolute;inset:0;padding:3.4cqw 4cqw 3cqw;display:flex;flex-direction:column;gap:1.5cqw}
+.sl.dark{background:var(--sl-dark);color:#fff}
+.sl.dark::before{content:"";position:absolute;right:-9cqw;bottom:-14cqw;width:40cqw;height:40cqw;border-radius:50%;border:.2cqw solid #24505a}
+.sl.dark::after{content:"";position:absolute;right:3cqw;bottom:-6cqw;width:24cqw;height:24cqw;border-radius:50%;border:.15cqw solid #1b3e46}
+.sl h3{font-size:2.9cqw;line-height:1.15;margin:0;font-weight:600;text-wrap:balance;letter-spacing:-.015em}
+.sl .ey{font-size:1.05cqw;letter-spacing:.2em;text-transform:uppercase;color:var(--sl-accent);font-weight:600;margin-bottom:-.6cqw}
+.sl .rule{display:none}
+.sl .foot{position:absolute;left:4cqw;right:4cqw;bottom:1.4cqw;display:flex;justify-content:space-between;font-size:.95cqw;color:var(--sl-mute)}
+.sl .eyebrow{font-size:1.15cqw;letter-spacing:.2em;text-transform:uppercase;color:#8fd3d9}
+.sl .big{font-size:5.6cqw;font-weight:600;line-height:1.05;letter-spacing:-.02em;margin:0}
+.sl .sub{font-size:1.9cqw;color:#cfe3e5;margin:0}
+.sl .meta{font-size:1.25cqw;color:#9bb7bb;margin-top:auto}
+.sl .sumrow{display:flex;flex-direction:column;gap:2cqw;flex:1;min-height:0}
+.sl .sumtext{font-size:1.85cqw;line-height:1.5;white-space:pre-wrap;max-width:78cqw}
+.sl .chip{display:inline-block;color:#fff;font-weight:600;font-size:1.2cqw;letter-spacing:.12em;text-transform:uppercase;padding:.5cqw 1.3cqw;border-radius:.4cqw;margin-bottom:1.4cqw}
+.sl .tally{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4cqw;margin-top:auto;margin-bottom:2.2cqw}
+.sl .tally div{background:var(--sl-paper);border-radius:1cqw;padding:1.3cqw 2cqw;display:flex;align-items:baseline;gap:1.4cqw}
+.sl .tally b{font-family:var(--mono);font-size:4.4cqw;font-weight:500}
+.sl .tally span{font-size:1.5cqw;color:var(--sl-mute)}
+.sl .tbl{display:flex;flex-direction:column;font-size:1.3cqw}
+.sl .tr{display:grid;gap:1cqw;padding:1cqw .9cqw;border-bottom:.1cqw solid var(--sl-line);align-items:center}
+.sl .tr.h{color:var(--sl-mute);font-weight:600;font-size:.95cqw;letter-spacing:.1em;text-transform:uppercase;border-bottom:.2cqw solid var(--sl-accent);padding-block:.7cqw}
+.sl .tc{min-width:0;overflow-wrap:anywhere}
+.sl .tc.r{text-align:right;font-family:var(--mono)}
+.sl .tc small{display:block;color:var(--sl-mute);font-size:1cqw;margin-top:.2cqw}
+.sl .tc b{font-weight:600}
+.sl .tone-good{color:var(--sl-good);font-weight:600}.sl .tone-warn{color:var(--sl-warn);font-weight:600}.sl .tone-bad{color:var(--sl-bad);font-weight:600}
+.sl .pl{display:inline-block;border-radius:99cqw;padding:.25cqw 1cqw;font-weight:600;font-size:1.05cqw}
+.sl .pl-good{background:#dcf1e6;color:#17704a}.sl .pl-warn{background:#f8ecd1;color:#8a5a0c}.sl .pl-bad{background:#f8dedb;color:#a32d23}.sl .pl-none{background:#eaeff0;color:#4b5b60}
+.sl .cards{display:grid;grid-template-columns:1fr 1fr;gap:1.4cqw;flex:1;min-height:0;align-content:start}
+.sl .cardx{background:var(--sl-paper);border-radius:1.2cqw;padding:2cqw 2.2cqw;display:flex;flex-direction:column;gap:.5cqw}
+.sl .cardx b{font-size:1.9cqw;font-weight:600}
+.sl .cardx span{font-size:1.45cqw;color:var(--sl-mute)}
+.sl .empty{color:var(--sl-mute);font-size:1.5cqw}
+@media (max-width:980px){
+  .app{grid-template-columns:1fr}.seg{display:flex}
+  .app[data-view="edit"] .right{display:none}.app[data-view="deck"] .left{display:none}
+  .right{position:static;max-height:none;overflow:visible}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head><body>
+<div class="app" id="app" data-view="edit">
+  <header class="top">
+    <div class="brand"><h1>QBR Builder</h1><p>Fill in the quarter. The deck builds as you type.</p></div>
+    <div class="tools">
+      <span class="pill t-warn" title="Everything pre-filled is invented">Fictional sample data</span>
+      <button class="btn ghost sm" id="btn-blank" type="button">Start blank</button>
+      <button class="btn ghost sm" id="btn-sample" type="button">Reset sample</button>
+      <button class="btn primary" id="btn-export" type="button" hidden>Download .pptx</button>
+    </div>
+  </header>
+  <div class="seg" id="seg" role="group" aria-label="View">
+    <button type="button" data-v="edit" aria-pressed="true">Edit</button><button type="button" data-v="deck" aria-pressed="false">Deck and checks</button>
+  </div>
+
+  <main class="left" id="form"></main>
+
+  <aside class="right">
+    <div class="stagewrap card">
+      <div class="stagebar"><strong id="slide-title">Deck</strong><span class="meta" id="slide-count"></span>
+        <span><button class="btn sm" id="prev" type="button">Prev</button> <button class="btn sm" id="next" type="button">Next</button></span></div>
+      <div id="stage"></div>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="small" id="export-note"></div>
+    </div>
+    <div class="card checks" id="checks"></div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script>
+// MODEL-START
+var SAMPLE = {
+  eng:{client:"Meridian Fund Services",provider:"Northbridge Delivery",quarter:"Q4 2026",period:"Oct to Dec 2026",next:"Q1 2027",presenter:"A. Rao, Delivery Lead",date:"2027-01-14",rag:"auto"},
+  band:2,
+  kpis:[
+    {name:"NAV published by 18:00",unit:"%",dir:"up",target:"99.5",actual:"99.7",prior:"99.1",note:""},
+    {name:"Settlement straight-through rate",unit:"%",dir:"up",target:"97",actual:"96.4",prior:"95.2",note:"Up 1.2 points. SSI mismatches still cause manual repairs; auto-match rule in test."},
+    {name:"Priority 1 incidents",unit:"",dir:"down",target:"2",actual:"4",prior:"3",note:"Two came from late custodian files. Monitoring and an earlier cut-off are planned."},
+    {name:"Mean time to resolve P1",unit:"hrs",dir:"down",target:"4",actual:"3.5",prior:"5.2",note:""},
+    {name:"Client onboarding cycle",unit:"days",dir:"down",target:"30",actual:"34",prior:"41",note:"Better than last quarter. KYC document turnaround on the client side is the remaining delay."},
+    {name:"Reconciliation breaks older than 5 days",unit:"",dir:"down",target:"25",actual:"18",prior:"40",note:""}
+  ],
+  wins:[
+    {title:"Reconciliation backlog cut by 55%",impact:"Aged breaks fell from 40 to 18, ahead of the 25 target."},
+    {title:"Onboarding 17% faster",impact:"Average cycle down from 41 to 34 days after the checklist and template changes."},
+    {title:"New NAV engine live for 12 funds",impact:"No pricing breaks in the first 3 cycles. Parallel run closed."}
+  ],
+  issues:[
+    {title:"P1 incidents above target",impact:"4 incidents against a target of 2; 2 affected the same-day NAV.",sev:"High",owner:"Northbridge delivery lead",status:"Open",action:"Root cause on custodian file latency and add arrival monitoring",due:"2027-01-29"},
+    {title:"Settlement STP below target",impact:"About 140 manual repairs a week.",sev:"Medium",owner:"Client operations lead",status:"Mitigating",action:"Release the auto-match rule for SSI mismatches",due:"2027-02-12"},
+    {title:"KYC documents arrive late",impact:"Adds about 4 days to each onboarding.",sev:"Medium",owner:"Client compliance",status:"Open",action:"Name a single KYC data owner and agree a 2-day turnaround",due:"2027-02-05"}
+  ],
+  roadmap:[
+    {title:"Investor reporting phase go-live",date:"2027-02-26",owner:"Northbridge delivery lead"},
+    {title:"Auto-match rule in production",date:"2027-02-12",owner:"Northbridge engineering"},
+    {title:"Year-end audit support pack issued",date:"2027-03-12",owner:"Client finance"}
+  ],
+  asks:[
+    {title:"Approve change request CR-14 (investor reporting scope)",why:"Needed to hold the 26 Feb go-live.",from:"Client COO",by:"2027-01-31"},
+    {title:"Nominate a KYC data owner",why:"Removes the main onboarding delay.",from:"Client compliance head",by:"2027-01-28"},
+    {title:"Confirm change-freeze windows for year-end",why:"Avoids a clash with the audit calendar.",from:"Client technology lead",by:"2027-02-05"}
+  ],
+  summary:"Q4 was mostly on target. NAV delivery reached 99.7% and aged reconciliation breaks fell from 40 to 18. Three targets were missed or at risk: P1 incidents (4 against 2), settlement STP (96.4% against 97%) and onboarding (34 days against 30). Each has an owner and a date. We need three decisions from you by 31 January.",
+  notes:{summary:"Open with the overall status, then the three misses. Do not bury them.",scorecard:"Walk the three non-green rows first. Expect: why did P1 incidents rise?",wins:"Lead with the reconciliation number. It is the clearest improvement.",issues:"Name the owner of each item. Ask the client owners to confirm the dates.",roadmap:"Point out that go-live depends on CR-14.",asks:"Ask for each decision in the room and note who answers."}
+};
+function blankState(){return{eng:{client:"",provider:"",quarter:"",period:"",next:"",presenter:"",date:"",rag:"auto"},band:2,
+  kpis:[{name:"",unit:"",dir:"up",target:"",actual:"",prior:"",note:""}],wins:[{title:"",impact:""}],
+  issues:[{title:"",impact:"",sev:"Medium",owner:"",status:"Open",action:"",due:""}],roadmap:[{title:"",date:"",owner:""}],
+  asks:[{title:"",why:"",from:"",by:""}],summary:"",notes:{summary:"",scorecard:"",wins:"",issues:"",roadmap:"",asks:""}}}
+var MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function num(v){if(typeof v==="number")return v;var t=String(v==null?"":v).replace(/[,\s]/g,"").replace(/%$/,"");if(t===""||!/^-?\d*\.?\d+$/.test(t))return NaN;return parseFloat(t)}
+function r2(n){return Math.round(n*100)/100}
+function fmtVal(v,unit){var n=num(v);if(isNaN(n))return "–";var s=String(r2(n));return unit==="%"?s+"%":(unit?s+" "+unit:s)}
+function fmtDate(d){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||"");return m?(+m[3])+" "+MONTHS[+m[2]-1]+" "+m[1]:""}
+function words(t){var m=String(t||"").trim().match(/\S+/g);return m?m.length:0}
+function kpiStatus(k,band){var t=num(k.target),a=num(k.actual);if(isNaN(t)||isNaN(a))return "nodata";var b=(isNaN(band)?2:band)/100;
+  if(k.dir==="down"){if(a<=t)return "met";if(t===0)return "miss";return a<=t*(1+b)?"risk":"miss"}
+  if(a>=t)return "met";return a>=t*(1-b)?"risk":"miss"}
+function suggestRag(c){var tot=c.met+c.risk+c.miss;if(!tot)return "none";if(c.miss*3>tot)return "red";if(c.miss>0||c.risk>0)return "amber";return "green"}
+var RAGW={green:"Green",amber:"Amber",red:"Red",none:"Not rated"};
+var STW={met:"Met",risk:"At risk",miss:"Missed",nodata:"No data"};
+var STT={met:"good",risk:"warn",miss:"bad",nodata:""};
+function change(k){var a=num(k.actual),p=num(k.prior);if(isNaN(a)||isNaN(p))return null;var d=r2(a-p);var good=d===0?null:((k.dir==="down")?d<0:d>0);return{d:d,good:good,pct:p!==0?Math.round((a-p)/Math.abs(p)*100):null}}
+function chunk(a,n){var o=[];for(var i=0;i<a.length;i+=n)o.push(a.slice(i,i+n));return o}
+var SEVW={High:0,Medium:1,Low:2};
+function byDate(f){return function(a,b){var x=a[f]||"9999",y=b[f]||"9999";return x<y?-1:x>y?1:0}}
+function buildSpec(s){
+  var e=s.eng,band=num(s.band);
+  var ks=s.kpis.filter(function(k){return k.name.trim()}).map(function(k){return{k:k,st:kpiStatus(k,band)}});
+  var cnt={met:0,risk:0,miss:0,nodata:0};ks.forEach(function(x){cnt[x.st]++});
+  var sug=suggestRag(cnt),rag=e.rag==="auto"?sug:e.rag,total=cnt.met+cnt.risk+cnt.miss;
+  var sl=[],n=s.notes||{};
+  sl.push({kind:"title",section:"engagement",client:e.client||"Client name",quarter:e.quarter,period:e.period,presenter:e.presenter,provider:e.provider,date:fmtDate(e.date)});
+  sl.push({kind:"summary",section:"narrative",title:(e.quarter||"This quarter")+" in summary"+(total?": "+cnt.met+" of "+total+" targets met":""),rag:rag,text:s.summary,cnt:cnt,total:total,notes:n.summary});
+  if(ks.length){
+    var parts=[cnt.met+" of "+total+" targets met"];if(cnt.risk)parts.push(cnt.risk+" at risk");if(cnt.miss)parts.push(cnt.miss+" missed");
+    chunk(ks,6).forEach(function(c,i){
+      sl.push({kind:"table",section:"kpis",title:"Scorecard: "+parts.join(", ")+(i?" (cont.)":""),notes:i?"":n.scorecard,
+        cols:[{h:"Measure",w:4.6},{h:"Target",w:1.4,al:"r"},{h:"Actual",w:1.4,al:"r"},{h:"Last quarter",w:1.5,al:"r"},{h:"Change",w:1.3,al:"r"},{h:"Status",w:1.5}],
+        rows:c.map(function(x){var k=x.k,ch=change(k);
+          return[{t:k.name,sub:x.st!=="met"?k.note:""},{t:fmtVal(k.target,k.unit)},{t:fmtVal(k.actual,k.unit),tone:STT[x.st]},{t:fmtVal(k.prior,k.unit)},
+            {t:ch?(ch.d>0?"+":"")+r2(ch.d)+(k.unit==="%"?" pts":""):"–",tone:ch&&ch.good!==null?(ch.good?"good":"bad"):""},{t:STW[x.st],tone:STT[x.st],pill:1}]})})})
+  }
+  var wins=s.wins.filter(function(w){return w.title.trim()});
+  chunk(wins,4).forEach(function(c,i){sl.push({kind:"cards",section:"wins",title:(wins.length+" result"+(wins.length>1?"s":"")+" delivered this quarter")+(i?" (cont.)":""),notes:i?"":n.wins,items:c.map(function(w){return{h:w.title,t:w.impact}})})});
+  var iss=s.issues.filter(function(x){return x.title.trim()}).sort(function(a,b){return (SEVW[a.sev]-SEVW[b.sev])||byDate("due")(a,b)});
+  var openN=iss.filter(function(x){return x.status!=="Resolved"}).length,hi=iss.filter(function(x){return x.sev==="High"&&x.status!=="Resolved"}).length;
+  chunk(iss,5).forEach(function(c,i){sl.push({kind:"table",section:"issues",title:(openN+" open issue"+(openN===1?"":"s")+(hi?", "+hi+" high priority":""))+(i?" (cont.)":""),notes:i?"":n.issues,
+    cols:[{h:"Issue",w:3.6},{h:"Severity",w:1.1},{h:"Owner",w:2},{h:"Action",w:3.2},{h:"Due",w:1.3},{h:"Status",w:1.2}],
+    rows:c.map(function(x){return[{t:x.title,sub:x.impact},{t:x.sev,tone:x.sev==="High"?"bad":x.sev==="Medium"?"warn":"",pill:1},{t:x.owner},{t:x.action},{t:fmtDate(x.due)},{t:x.status,tone:x.status==="Resolved"?"good":"",pill:1}]})})});
+  var rm=s.roadmap.filter(function(x){return x.title.trim()}).sort(byDate("date"));
+  chunk(rm,7).forEach(function(c,i){sl.push({kind:"table",section:"roadmap",title:(e.next||"Next quarter")+": "+rm.length+" milestone"+(rm.length>1?"s":"")+(rm[0]&&rm[0].date?", first on "+fmtDate(rm[0].date):"")+(i?" (cont.)":""),notes:i?"":n.roadmap,
+    cols:[{h:"Date",w:1.8},{h:"Milestone",w:6.4},{h:"Owner",w:3.9}],rows:c.map(function(x){return[{t:fmtDate(x.date)},{t:x.title},{t:x.owner}]})})});
+  var as=s.asks.filter(function(x){return x.title.trim()}).sort(byDate("by"));
+  chunk(as,4).forEach(function(c,i){sl.push({kind:"table",section:"asks",title:as.length+" decision"+(as.length>1?"s":"")+" needed from you"+(as[0]&&as[0].by?", the first by "+fmtDate(as[0].by):"")+(i?" (cont.)":""),notes:i?"":n.asks,
+    cols:[{h:"Decision",w:6},{h:"Who decides",w:3.2},{h:"Needed by",w:2.9}],rows:c.map(function(x){return[{t:x.title,sub:x.why},{t:x.from},{t:fmtDate(x.by)}]})})});
+  var EY={narrative:"Summary",kpis:"Scorecard",wins:"Wins",issues:"Issues and risks",roadmap:"Next quarter",asks:"Decisions"};sl.forEach(function(x){x.eyebrow=EY[x.section]||""});
+  return{slides:sl,cnt:cnt,rag:rag,sug:sug,total:total,ks:ks,wins:wins,iss:iss,rm:rm,as:as};
+}
+function runChecks(s,spec){
+  var o=[],add=function(sec,label,st,d){o.push({sec:sec,label:label,st:st,d:d||""})},e=s.eng;
+  var list=function(a){return a.slice(0,3).join(", ")+(a.length>3?" and "+(a.length-3)+" more":"")};
+  var miss=[];if(!e.client.trim())miss.push("client");if(!e.quarter.trim())miss.push("quarter");if(!e.presenter.trim())miss.push("presenter");if(!e.date)miss.push("review date");if(!e.next.trim())miss.push("next quarter");
+  add("engagement","Title slide is complete",miss.length?(miss.indexOf("client")>-1||miss.indexOf("quarter")>-1?"fail":"warn"):"pass",miss.length?"Missing: "+miss.join(", ")+".":"");
+  var bad=spec.ks.filter(function(x){return x.st==="nodata"}).map(function(x){return x.k.name});
+  add("kpis","Every measure has a target and an actual",!spec.ks.length?"fail":bad.length?"fail":"pass",!spec.ks.length?"Add at least one measure.":bad.length?"Check: "+list(bad)+".":"");
+  var nw=spec.ks.filter(function(x){return (x.st==="miss"||x.st==="risk")&&!x.k.note.trim()}).map(function(x){return x.k.name});
+  add("kpis","Every miss or at-risk measure has an explanation",nw.length?"fail":"pass",nw.length?"Clients ask why. Add a note for: "+list(nw)+".":"");
+  var wc=words(s.summary);
+  add("narrative","Executive summary is short and has numbers",wc===0?"fail":(wc>80||!/\d/.test(s.summary))?"warn":"pass",wc===0?"Write two to four sentences, or draft with Claude.":wc>80?wc+" words. Aim for 80 or fewer.":!/\d/.test(s.summary)?"Add the headline figure.":wc+" words.");
+  var nonum=spec.wins.filter(function(w){return !/\d/.test(w.title+" "+w.impact)}).map(function(w){return w.title});
+  add("wins","Each win is backed by a number",!spec.wins.length?"warn":nonum.length?"warn":spec.wins.length>4?"warn":"pass",!spec.wins.length?"No wins listed.":nonum.length?"No figure in: "+list(nonum)+".":spec.wins.length>4?spec.wins.length+" wins. Four or fewer read faster.":"");
+  var open=spec.iss.filter(function(x){return x.status!=="Resolved"});
+  var inc=open.filter(function(x){return !x.owner.trim()||!x.action.trim()||!x.due}).map(function(x){return x.title});
+  var missed=spec.cnt.miss;
+  add("issues","Every open issue has an owner, an action and a date",(missed>0&&!spec.iss.length)?"fail":inc.length?"fail":"pass",(missed>0&&!spec.iss.length)?"Missed targets but no issues listed.":inc.length?"Incomplete: "+list(inc)+".":"");
+  if(e.date){var late=open.filter(function(x){return x.due&&x.due<e.date}).map(function(x){return x.title});
+    add("issues","Issue dates fall after the review date",late.length?"warn":"pass",late.length?"Already past: "+list(late)+".":"");}
+  var ri=spec.rm.filter(function(x){return !x.date||!x.owner.trim()}).map(function(x){return x.title});
+  add("roadmap","Every milestone has a date and an owner",!spec.rm.length?"warn":ri.length?"fail":"pass",!spec.rm.length?"No milestones for next quarter.":ri.length?"Incomplete: "+list(ri)+".":"");
+  var ai=spec.as.filter(function(x){return !x.from.trim()||!x.by}).map(function(x){return x.title});
+  add("asks","Each decision names who decides and by when",!spec.as.length?"warn":ai.length?"fail":spec.as.length>3?"warn":"pass",!spec.as.length?"No decisions requested. Without one this is a status report.":ai.length?"Incomplete: "+list(ai)+".":spec.as.length>3?spec.as.length+" asks. Three or fewer get answered.":"");
+  if(s.eng.rag!=="auto"&&spec.sug!=="none"&&s.eng.rag!==spec.sug)add("engagement","Overall status matches the scorecard","warn","You chose "+RAGW[s.eng.rag]+"; the scorecard suggests "+RAGW[spec.sug]+". Be ready to explain.");
+  return o;
+}
+function buildInput(s,spec){
+  var tone=function(k){var c=change(k);return c?{changeVsPrior:c.d,pctChange:c.pct}:{}};
+  return{engagement:{client:s.eng.client,quarter:s.eng.quarter,period:s.eng.period,nextQuarter:s.eng.next,reviewDate:s.eng.date,overallStatus:RAGW[spec.rag]},
+    counts:{measures:spec.total,met:spec.cnt.met,atRisk:spec.cnt.risk,missed:spec.cnt.miss,wins:spec.wins.length,openIssues:spec.iss.filter(function(x){return x.status!=="Resolved"}).length,milestones:spec.rm.length,decisions:spec.as.length},
+    measures:spec.ks.map(function(x){var k=x.k,o={name:k.name,unit:k.unit,betterWhen:k.dir==="down"?"lower":"higher",target:k.target,actual:k.actual,lastQuarter:k.prior,status:STW[x.st],note:k.note};var t=tone(k);for(var a in t)o[a]=t[a];return o}),
+    wins:spec.wins,issues:spec.iss,milestones:spec.rm,decisions:spec.as};
+}
+function numTokens(str){return(String(str).match(/\d+(?:[.,]\d+)*/g)||[]).map(function(x){return parseFloat(x.replace(/,/g,""))})}
+function unknownNumbers(text,input){var ok={};numTokens(JSON.stringify(input)).forEach(function(n){ok[n]=1});var bad=[];numTokens(text).forEach(function(n){if(!ok[n]&&bad.indexOf(n)<0)bad.push(n)});return bad}
+function buildPptx(pres,spec,info){
+  var C={ink:"14262E",accent:"0E7C86",mute:"5B6B70",line:"DDE3E4",paper:"F1F5F5",good:"1E8E5A",warn:"B7791F",bad:"C0392B"},F="Calibri";
+  var tc=function(t){return t==="good"?C.good:t==="warn"?C.warn:t==="bad"?C.bad:C.ink};
+  var rc={green:C.good,amber:C.warn,red:C.bad,none:C.mute},none={type:"none"};
+  pres.layout="LAYOUT_WIDE";pres.title=(info.client||"Client")+" QBR "+(info.quarter||"");pres.author=info.provider||"";
+  spec.slides.forEach(function(sl,i){
+    var s=pres.addSlide();
+    if(sl.kind==="title"){
+      s.background={color:C.ink};
+      s.addShape(pres.ShapeType.ellipse,{x:8.6,y:2.6,w:7,h:7,fill:{type:"none"},line:{color:"24505A",width:2}});
+      s.addShape(pres.ShapeType.ellipse,{x:10.1,y:4.1,w:4,h:4,fill:{type:"none"},line:{color:"1B3E46",width:1.5}});
+      s.addText("QUARTERLY BUSINESS REVIEW",{x:.8,y:1.5,w:11,h:.4,fontFace:F,fontSize:14,bold:true,color:"6FD0D8",charSpacing:6});
+      s.addText(sl.client,{x:.8,y:2.0,w:9,h:1.7,fontFace:F,fontSize:54,bold:true,color:"FFFFFF",valign:"top"});
+      s.addText([sl.quarter,sl.period].filter(Boolean).join("   |   "),{x:.8,y:3.8,w:9,h:.6,fontFace:F,fontSize:22,color:"CFE3E5"});
+      s.addText([sl.presenter,sl.provider,sl.date].filter(Boolean).join("   |   "),{x:.8,y:6.5,w:11.5,h:.4,fontFace:F,fontSize:13,color:"9BB7BB"});
+    }else{
+      s.background={color:"FFFFFF"};
+      s.addText((sl.eyebrow||"").toUpperCase(),{x:.6,y:.4,w:8,h:.3,fontFace:F,fontSize:11,bold:true,color:C.accent,charSpacing:4});
+      s.addText(sl.title,{x:.6,y:.75,w:12.1,h:1.0,fontFace:F,fontSize:28,bold:true,color:C.ink,valign:"top"});
+      s.addText((info.client||"")+"  |  "+(info.quarter||"")+" QBR",{x:.6,y:7.0,w:8,h:.3,fontFace:F,fontSize:9,color:C.mute});
+      s.addText(String(i+1),{x:11.7,y:7.0,w:1,h:.3,fontFace:F,fontSize:9,color:C.mute,align:"right"});
+      if(sl.kind==="summary"){
+        s.addText((RAGW[sl.rag]||"").toUpperCase()+" OVERALL",{x:.6,y:1.9,w:2.8,h:.42,fontFace:F,fontSize:12,bold:true,color:"FFFFFF",fill:{color:rc[sl.rag]||C.mute},align:"center",charSpacing:3});
+        s.addText(sl.text||"",{x:.6,y:2.5,w:10.4,h:2.3,fontFace:F,fontSize:20,color:C.ink,valign:"top",paraSpaceAfter:6});
+        [["Met",sl.cnt.met,C.good],["At risk",sl.cnt.risk,C.warn],["Missed",sl.cnt.miss,C.bad]].forEach(function(t,j){
+          var x=.6+j*4.1;
+          s.addShape(pres.ShapeType.roundRect,{x:x,y:5.0,w:3.9,h:1.7,rectRadius:.12,fill:{color:C.paper},line:{color:C.paper,width:0}});
+          s.addText(String(t[1]),{x:x+.3,y:5.0,w:1.6,h:1.7,fontFace:F,fontSize:54,bold:true,color:t[2],valign:"middle"});
+          s.addText(t[0],{x:x+1.9,y:5.0,w:1.8,h:1.7,fontFace:F,fontSize:18,color:C.mute,valign:"middle"});
+        });
+      }else if(sl.kind==="cards"){
+        sl.items.forEach(function(it,j){var x=.6+(j%2)*6.15,y=1.9+Math.floor(j/2)*2.45;
+          s.addShape(pres.ShapeType.roundRect,{x:x,y:y,w:5.95,h:2.25,rectRadius:.12,fill:{color:C.paper},line:{color:C.paper,width:0}});
+          s.addText([{text:it.h,options:{bold:true,fontSize:20,color:C.ink,breakLine:true}},{text:it.t||"",options:{fontSize:15,color:C.mute}}],{x:x+.3,y:y+.15,w:5.35,h:1.95,fontFace:F,valign:"top",paraSpaceAfter:8});
+        });
+      }else if(sl.kind==="table"){
+        var tot=sl.cols.reduce(function(a,c){return a+c.w},0),colW=sl.cols.map(function(c){return c.w/tot*12.1});
+        var hb=[none,none,{type:"solid",pt:1.5,color:C.accent},none],bb=[none,none,{type:"solid",pt:.75,color:C.line},none];
+        var rows=[sl.cols.map(function(c){return{text:c.h.toUpperCase(),options:{bold:true,color:C.mute,fontSize:10.5,align:c.al==="r"?"right":"left",border:hb}}})];
+        sl.rows.forEach(function(r){rows.push(r.map(function(c,j){var al=sl.cols[j].al==="r"?"right":"left",col=tc(c.tone),lab=(c.pill&&c.tone?"\u25CF ":"")+(c.t||"");
+          var txt=c.sub?[{text:c.t||"",options:{bold:true,breakLine:true,color:C.ink}},{text:c.sub,options:{fontSize:11,color:C.mute}}]:lab;
+          return{text:txt,options:{align:al,color:col,bold:!!c.tone,border:bb}}}))});
+        s.addTable(rows,{x:.6,y:1.9,w:12.1,colW:colW,fontFace:F,fontSize:14,color:C.ink,valign:"middle",margin:[6,6,6,6]});
+      }
+    }
+    if(sl.notes)s.addNotes(sl.notes);
+  });
+}
+// MODEL-END
+
+var STANDALONE=!(window.claude&&window.claude.use);
+var S=null,SPEC=null,CUR=0,SMP=null,DL=null,ctl=null,PEND=null,KEY="qbr-builder-v1";
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function load(){try{var t=localStorage.getItem(KEY);if(t){var o=JSON.parse(t);if(o&&Array.isArray(o.kpis)&&o.eng&&o.notes)return o}}catch(e){}return clone(SAMPLE)}
+var saveT=0;function save(){clearTimeout(saveT);saveT=setTimeout(function(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},400)}
+function setPath(o,p,v){var a=p.split("."),i;for(i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v}
+
+function F(label,path,v,o){o=o||{};var id="f-"+path.replace(/\./g,"-"),c;
+  if(o.area)c='<textarea id="'+id+'" data-p="'+path+'" rows="'+(o.rows||3)+'" placeholder="'+esc(o.ph||"")+'">'+esc(v)+'</textarea>';
+  else if(o.opts)c='<select id="'+id+'" data-p="'+path+'">'+o.opts.map(function(x){return'<option value="'+esc(x[0])+'"'+(x[0]===v?" selected":"")+'>'+esc(x[1])+'</option>'}).join("")+'</select>';
+  else c='<input id="'+id+'" data-p="'+path+'" type="'+(o.type||"text")+'"'+(o.num?' class="num" inputmode="decimal"':"")+' value="'+esc(v)+'" placeholder="'+esc(o.ph||"")+'" autocomplete="off">';
+  return'<label class="f '+(o.cls||"")+'"><span>'+esc(label)+'</span>'+c+'</label>'}
+function delBtn(l,i){return'<button class="del" type="button" data-act="del" data-l="'+l+'" data-i="'+i+'" aria-label="Remove this row">&times;</button>'}
+function listHtml(l){
+  if(l==="kpis")return S.kpis.map(function(k,i){var p="kpis."+i+".";
+    return'<div class="row"><div class="head">'+F("Measure",p+"name",k.name,{ph:"e.g. NAV published by 18:00"})+'<span class="pill t-none" data-st="'+i+'"></span>'+delBtn(l,i)+'</div>'+
+    '<div class="kgrid">'+F("Unit",p+"unit",k.unit,{ph:"%, hrs"})+F("Better when",p+"dir",k.dir,{opts:[["up","Higher"],["down","Lower"]]})+F("Target",p+"target",k.target,{num:1})+F("Actual",p+"actual",k.actual,{num:1})+F("Prior",p+"prior",k.prior,{num:1})+'</div>'+
+    F("Why, and what is being done",p+"note",k.note,{ph:"Needed when the measure is missed or at risk"})+'</div>'}).join("");
+  if(l==="wins")return S.wins.map(function(w,i){var p="wins."+i+".";return'<div class="row"><div class="head">'+F("Win",p+"title",w.title,{ph:"What improved"})+delBtn(l,i)+'</div>'+F("Evidence (with a number)",p+"impact",w.impact,{ph:"From 40 to 18 aged breaks"})+'</div>'}).join("");
+  if(l==="issues")return S.issues.map(function(x,i){var p="issues."+i+".";return'<div class="row"><div class="head">'+F("Issue",p+"title",x.title,{ph:"What is going wrong"})+delBtn(l,i)+'</div>'+F("Impact",p+"impact",x.impact,{ph:"Who or what it affects, in numbers"})+
+    '<div class="grid">'+F("Severity",p+"sev",x.sev,{opts:[["High","High"],["Medium","Medium"],["Low","Low"]]})+F("Status",p+"status",x.status,{opts:[["Open","Open"],["Mitigating","Mitigating"],["Resolved","Resolved"]]})+F("Owner",p+"owner",x.owner)+F("Due",p+"due",x.due,{type:"date"})+'</div>'+F("Action",p+"action",x.action,{ph:"The next concrete step"})+'</div>'}).join("");
+  if(l==="roadmap")return S.roadmap.map(function(x,i){var p="roadmap."+i+".";return'<div class="row"><div class="head">'+F("Milestone",p+"title",x.title)+delBtn(l,i)+'</div><div class="grid">'+F("Date",p+"date",x.date,{type:"date"})+F("Owner",p+"owner",x.owner)+'</div></div>'}).join("");
+  if(l==="asks")return S.asks.map(function(x,i){var p="asks."+i+".";return'<div class="row"><div class="head">'+F("Decision requested",p+"title",x.title)+delBtn(l,i)+'</div>'+F("Why it matters",p+"why",x.why)+'<div class="grid">'+F("Who decides",p+"from",x.from)+F("Needed by",p+"by",x.by,{type:"date"})+'</div></div>'}).join("");
+  return""}
+var BLANKROW={kpis:{name:"",unit:"",dir:"up",target:"",actual:"",prior:"",note:""},wins:{title:"",impact:""},issues:{title:"",impact:"",sev:"Medium",owner:"",status:"Open",action:"",due:""},roadmap:{title:"",date:"",owner:""},asks:{title:"",why:"",from:"",by:""}};
+function sec(id,h,hint,body){return'<section class="card" id="sec-'+id+'" data-sec="'+id+'"><h2>'+h+'</h2><p class="hint">'+hint+'</p>'+body+'</section>'}
+function renderForm(){
+  var e=S.eng,p="eng.";
+  $("#form").innerHTML=
+   '<nav class="nav" aria-label="Sections">'+[["engagement","Engagement"],["kpis","Scorecard"],["wins","Wins"],["issues","Issues"],["roadmap","Next quarter"],["asks","Decisions"],["narrative","Narrative"]].map(function(x){return'<button type="button" data-go="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</nav>'+
+   sec("engagement","Engagement","Who the review is for and when it takes place.",'<div class="grid">'+F("Client",p+"client",e.client)+F("Your team",p+"provider",e.provider)+F("Quarter",p+"quarter",e.quarter,{ph:"Q4 2026"})+F("Period",p+"period",e.period,{ph:"Oct to Dec 2026"})+F("Next quarter",p+"next",e.next,{ph:"Q1 2027"})+F("Review date",p+"date",e.date,{type:"date"})+F("Presenter",p+"presenter",e.presenter,{cls:"wide"})+'</div>')+
+   sec("kpis","Scorecard","Target against actual. Status is worked out for you, so a miss cannot be hidden by wording.",'<div id="l-kpis">'+listHtml("kpis")+'</div><button class="btn add" type="button" data-act="add" data-l="kpis">Add a measure</button>'+
+     '<div class="inline"><label for="f-band">At risk means within</label><input id="f-band" data-p="band" type="text" class="num" inputmode="decimal" value="'+esc(S.band)+'"><span>% of the target</span></div>')+
+   sec("wins","Wins","Three or four, each with a number.",'<div id="l-wins">'+listHtml("wins")+'</div><button class="btn add" type="button" data-act="add" data-l="wins">Add a win</button>')+
+   sec("issues","Issues and risks","Be the first to name them. Every open item needs an owner, an action and a date.",'<div id="l-issues">'+listHtml("issues")+'</div><button class="btn add" type="button" data-act="add" data-l="issues">Add an issue</button>')+
+   sec("roadmap","Next quarter","The milestones you will be held to.",'<div id="l-roadmap">'+listHtml("roadmap")+'</div><button class="btn add" type="button" data-act="add" data-l="roadmap">Add a milestone</button>')+
+   sec("asks","Decisions you need","Each one names who decides and by when.",'<div id="l-asks">'+listHtml("asks")+'</div><button class="btn add" type="button" data-act="add" data-l="asks">Add a decision</button>')+
+   sec("narrative","Narrative and speaker notes","Write these yourself or draft them with Claude and edit.",
+     '<div class="ai" id="ai" hidden><p><strong>Draft with Claude.</strong> Sends the measures, wins, issues, milestones and decisions above, with the names and text you typed, to Claude. Use fictional or approved data only. You review the draft before it replaces anything.</p>'+
+     '<button class="btn" id="btn-draft" type="button">Draft summary and notes</button> <button class="btn ghost" id="btn-cancel" type="button" hidden>Cancel</button><span class="small" id="ai-st" role="status"></span><div class="res" id="ai-res" hidden></div></div>'+
+     F("Executive summary","summary",S.summary,{area:1,rows:5,ph:"Outcome first, then the misses, then what you need from the client."})+
+     '<div class="grid" style="margin-top:10px">'+[["summary","Notes: summary"],["scorecard","Notes: scorecard"],["wins","Notes: wins"],["issues","Notes: issues"],["roadmap","Notes: next quarter"],["asks","Notes: decisions"]].map(function(x){return F(x[1],"notes."+x[0],S.notes[x[0]],{area:1,rows:3,cls:"wide"})}).join("")+'</div><p class="small">Notes go into the speaker notes of the downloaded deck.</p>');
+  if(SMP)$("#ai").hidden=false;
+}
+function renderList(l){$("#l-"+l).innerHTML=listHtml(l)}
+
+function slideHtml(sl,i,n){
+  var foot=function(){return'<div class="foot"><span>'+esc(S.eng.client)+' | '+esc(S.eng.quarter)+' QBR</span><span>'+(i+1)+'</span></div>'};
+  if(sl.kind==="title")return'<div class="sl dark"><div class="pad"><div class="eyebrow">Quarterly business review</div><p class="big">'+esc(sl.client)+'</p><p class="sub">'+esc([sl.quarter,sl.period].filter(Boolean).join("  |  "))+'</p><div class="meta">'+esc([sl.presenter,sl.provider,sl.date].filter(Boolean).join("  |  "))+'</div></div></div>';
+  var body="";
+  if(sl.kind==="summary"){var col={green:"var(--sl-good)",amber:"var(--sl-warn)",red:"var(--sl-bad)",none:"var(--sl-mute)"}[sl.rag];
+    body='<div class="sumrow"><div><span class="chip" style="background:'+col+'">'+esc(RAGW[sl.rag])+' overall</span><div class="sumtext">'+(sl.text.trim()?esc(sl.text):'<span class="empty">Write the executive summary.</span>')+'</div></div>'+
+      '<div class="tally"><div><b style="color:var(--sl-good)">'+sl.cnt.met+'</b><span>Met</span></div><div><b style="color:var(--sl-warn)">'+sl.cnt.risk+'</b><span>At risk</span></div><div><b style="color:var(--sl-bad)">'+sl.cnt.miss+'</b><span>Missed</span></div></div></div>';}
+  else if(sl.kind==="cards")body='<div class="cards">'+sl.items.map(function(it){return'<div class="cardx"><b>'+esc(it.h)+'</b><span>'+esc(it.t)+'</span></div>'}).join("")+'</div>';
+  else{var gt=sl.cols.map(function(c){return c.w+"fr"}).join(" ");
+    body='<div class="tbl"><div class="tr h" style="grid-template-columns:'+gt+'">'+sl.cols.map(function(c){return'<div class="tc'+(c.al==="r"?" r":"")+'">'+esc(c.h)+'</div>'}).join("")+'</div>'+
+      sl.rows.map(function(r){return'<div class="tr" style="grid-template-columns:'+gt+'">'+r.map(function(c,j){var inner=c.sub?'<b>'+esc(c.t)+'</b><small>'+esc(c.sub)+'</small>':esc(c.t);if(c.pill)inner='<span class="pl pl-'+(c.tone||"none")+'">'+inner+'</span>';return'<div class="tc'+(sl.cols[j].al==="r"?" r":"")+(c.tone&&!c.pill?" tone-"+c.tone:"")+'">'+inner+'</div>'}).join("")+'</div>'}).join("")+'</div>';}
+  return'<div class="sl"><div class="pad"><div class="ey">'+esc(sl.eyebrow||"")+'</div><h3>'+esc(sl.title)+'</h3>'+body+'</div>'+foot()+'</div>';
+}
+function renderDeck(){
+  var n=SPEC.slides.length;if(CUR>=n)CUR=n-1;if(CUR<0)CUR=0;
+  var sl=SPEC.slides[CUR];
+  $("#stage").innerHTML=slideHtml(sl,CUR,n);
+  $("#slide-title").textContent=sl.kind==="title"?"Title":sl.kind==="summary"?"Summary":(sl.section==="kpis"?"Scorecard":sl.section==="wins"?"Wins":sl.section==="issues"?"Issues":sl.section==="roadmap"?"Next quarter":"Decisions");
+  $("#slide-count").textContent="Slide "+(CUR+1)+" of "+n;
+  $("#thumbs").innerHTML=SPEC.slides.map(function(x,i){return'<button class="thumb" type="button" data-slide="'+i+'" aria-label="Slide '+(i+1)+'"'+(i===CUR?' aria-current="true"':"")+'>'+slideHtml(x,i,n)+'</button>'}).join("");
+  var cur=$("#thumbs .thumb[aria-current]");if(cur&&cur.scrollIntoView&&false)cur.scrollIntoView({block:"nearest"});
+}
+var ICON={pass:["✓","t-good"],warn:["!","t-warn"],fail:["×","t-bad"]};
+function renderChecks(){
+  var cs=runChecks(S,SPEC),f=cs.filter(function(c){return c.st==="fail"}).length,w=cs.filter(function(c){return c.st==="warn"}).length,p=cs.length-f-w;
+  var verdict=f?"Fix before sending":w?"Nearly there":"Ready to present";
+  $("#checks").innerHTML='<h2>Readiness <span class="pill '+(f?"t-bad":w?"t-warn":"t-good")+'">'+verdict+'</span></h2><p class="hint">'+p+' of '+cs.length+' checks passed. These test the content, not the layout.</p><ul>'+
+    cs.map(function(c){return'<li><span class="ic '+ICON[c.st][1]+'">'+ICON[c.st][0]+'</span><span>'+esc(c.label)+'<a data-go="'+c.sec+'">Go to</a>'+(c.d?'<span class="d">'+esc(c.d)+'</span>':"")+'</span></li>'}).join("")+'</ul>';
+}
+function refreshLive(){
+  var band=num(S.band);S.kpis.forEach(function(k,i){var el=document.querySelector('[data-st="'+i+'"]');if(!el)return;var st=k.name.trim()?kpiStatus(k,band):"nodata";el.textContent=STW[st];el.className="pill "+({met:"t-good",risk:"t-warn",miss:"t-bad",nodata:"t-none"}[st])});
+  var sg=$("#rag-note");
+}
+function update(){SPEC=buildSpec(S);renderDeck();renderChecks();refreshLive();updateRagNote();save()}
+function updateRagNote(){
+  var el=$("#rag-sug");if(!el){var host=$("#sec-engagement .grid");if(!host)return;host.insertAdjacentHTML("beforeend",'<label class="f wide"><span>Overall status</span><select id="f-eng-rag" data-p="eng.rag"><option value="auto">Suggested from the scorecard</option><option value="green">Green</option><option value="amber">Amber</option><option value="red">Red</option></select><span id="rag-sug" class="sugg" style="text-transform:none;letter-spacing:0"></span></label>');$("#f-eng-rag").value=S.eng.rag;el=$("#rag-sug")}
+  el.textContent="Scorecard suggests "+RAGW[SPEC.sug]+(SPEC.total?" ("+SPEC.cnt.met+" met, "+SPEC.cnt.risk+" at risk, "+SPEC.cnt.miss+" missed). Red when more than a third are missed.":".");
+}
+function showFor(sec){var i=SPEC.slides.findIndex(function(x){return x.section===sec});if(i>=0&&i!==CUR){CUR=i;renderDeck()}}
+function fillStatic(){renderForm();updateRagNote();update()}
+
+/* events */
+$("#form").addEventListener("input",function(e){var p=e.target.dataset&&e.target.dataset.p;if(!p)return;setPath(S,p,e.target.value);update()});
+$("#form").addEventListener("change",function(e){var p=e.target.dataset&&e.target.dataset.p;if(!p)return;setPath(S,p,e.target.value);update()});
+$("#form").addEventListener("focusin",function(e){var s=e.target.closest&&e.target.closest("[data-sec]");if(s)showFor(s.dataset.sec)});
+document.addEventListener("click",function(e){
+  var t=e.target.closest("button,a");if(!t)return;
+  if(t.dataset.go){var el=$("#sec-"+t.dataset.go);if(el){$("#app").dataset.view="edit";syncSeg();el.scrollIntoView({behavior:"smooth",block:"start"});showFor(t.dataset.go)}return}
+  if(t.dataset.slide){CUR=+t.dataset.slide;renderDeck()}
+  if(t.dataset.act==="add"){var l=t.dataset.l;S[l].push(clone(BLANKROW[l]));renderList(l);update();var rows=document.querySelectorAll("#l-"+l+" .row");var last=rows[rows.length-1];if(last){var i=last.querySelector("input,textarea");if(i)i.focus()}}
+  if(t.dataset.act==="del"){var l2=t.dataset.l;S[l2].splice(+t.dataset.i,1);renderList(l2);update()}
+});
+$("#prev").onclick=function(){CUR=Math.max(0,CUR-1);renderDeck()};
+$("#next").onclick=function(){CUR=Math.min(SPEC.slides.length-1,CUR+1);renderDeck()};
+function syncSeg(){var v=$("#app").dataset.view;document.querySelectorAll("#seg button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.v===v?"true":"false")})}
+$("#seg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$("#app").dataset.view=b.dataset.v;syncSeg()});
+var armT={};function arm(btn,label,fn){btn.addEventListener("click",function(){if(btn.dataset.armed){clearTimeout(armT[btn.id]);btn.textContent=label;delete btn.dataset.armed;fn()}else{btn.dataset.armed="1";btn.textContent="Click again to confirm";armT[btn.id]=setTimeout(function(){btn.textContent=label;delete btn.dataset.armed},3000)}})}
+arm($("#btn-blank"),"Start blank",function(){S=blankState();CUR=0;PEND=null;fillStatic()});
+arm($("#btn-sample"),"Reset sample",function(){S=clone(SAMPLE);CUR=0;PEND=null;fillStatic()});
+
+/* Claude draft */
+function aiMsg(t){$("#ai-st").textContent=t?" "+t:""}
+function draftPrompt(input){return'You are drafting the narrative for a client-facing quarterly business review (QBR) that a delivery team will present to its client.\n'+
+ 'Rules:\n- Use only the facts and numbers in the DATA. Do not invent causes, names, dates, commitments or numbers.\n- Plain, direct sentences. No hype and no filler.\n- Lead with the overall outcome, then name the misses openly with their action, then say what is needed from the client.\n- Write in the first person plural ("we") for the delivery team.\n'+
+ 'Return JSON only, with this shape: {"summary":"...","notes":{"summary":"...","scorecard":"...","wins":"...","issues":"...","roadmap":"...","asks":"..."}}\n'+
+ '"summary" is the executive summary: at most 70 words. Each note is what the presenter should say aloud on that slide plus the one question the client is most likely to ask: at most 45 words.\n\nDATA:\n'+JSON.stringify(input)}
+async function runDraft(){
+  if(!SMP)return;var input=buildInput(S,SPEC);
+  if(!SPEC.ks.length){aiMsg("Add at least one measure first.");return}
+  ctl=new AbortController();$("#btn-draft").disabled=true;$("#btn-cancel").hidden=false;aiMsg("Drafting...");$("#ai-res").hidden=true;
+  try{
+    var r=await SMP.json(draftPrompt(input),{signal:ctl.signal,cache:false});
+    if(!r||typeof r.summary!=="string"||typeof r.notes!=="object"||!r.notes)throw {code:"bad",message:"The reply was not in the expected shape. Try again."};
+    var all=r.summary+" "+Object.keys(r.notes).map(function(k){return r.notes[k]}).join(" ");
+    PEND={summary:r.summary.trim(),notes:r.notes,unknown:unknownNumbers(all,input)};showDraft();aiMsg("");
+  }catch(err){aiMsg(err&&err.code==="not_granted"?"Permission was not given.":err&&err.code==="rate_limited"?"Too many requests. Wait a moment.":err&&err.name==="AbortError"?"Cancelled.":(err&&err.message)||"Could not draft.")}
+  finally{$("#btn-draft").disabled=false;$("#btn-cancel").hidden=true;ctl=null}
+}
+function showDraft(){
+  var d=PEND,box=$("#ai-res"),k=["summary","scorecard","wins","issues","roadmap","asks"];
+  box.hidden=false;
+  box.innerHTML='<strong>Draft to review</strong><pre>'+esc(d.summary)+'</pre><pre>'+k.map(function(x){return x+": "+(d.notes[x]||"")}).map(esc).join("\n\n")+'</pre>'+
+   (d.unknown.length?'<div class="flag t-warn">Numbers in this draft that are not in your data: <strong>'+esc(d.unknown.join(", "))+'</strong>. Check them before using it.</div>':'<div class="flag t-good">Every number in the draft appears in your data. This does not check that the wording is right.</div>')+
+   '<div><button class="btn primary" id="btn-use" type="button">Use this draft</button> <button class="btn ghost" id="btn-drop" type="button">Discard</button></div>';
+}
+document.addEventListener("click",function(e){
+  var id=e.target.id;
+  if(id==="btn-draft")runDraft();
+  if(id==="btn-cancel"&&ctl)ctl.abort();
+  if(id==="btn-drop"){PEND=null;$("#ai-res").hidden=true}
+  if(id==="btn-use"&&PEND){S.summary=PEND.summary;var k=["summary","scorecard","wins","issues","roadmap","asks"];k.forEach(function(x){if(typeof PEND.notes[x]==="string")S.notes[x]=PEND.notes[x].trim()});PEND=null;
+    $("#f-summary").value=S.summary;k.forEach(function(x){var el=$("#f-notes-"+x);if(el)el.value=S.notes[x]});$("#ai-res").hidden=true;aiMsg("Draft applied. Edit it as you like.");update()}
+});
+
+/* export */
+function exportReady(){var ok=(!!DL||STANDALONE)&&typeof window.PptxGenJS==="function";$("#btn-export").hidden=!ok;$("#export-note").textContent=ok?"The download is an editable PowerPoint file with your notes in the speaker notes.":(DL?"":"Download is not available in this view.")}
+$("#btn-export").addEventListener("click",async function(){
+  var b=$("#btn-export");b.disabled=true;
+  try{var pres=new window.PptxGenJS();buildPptx(pres,SPEC,{client:S.eng.client,quarter:S.eng.quarter,provider:S.eng.provider});
+    var blob=await pres.write({outputType:"blob"});
+    var name=("QBR "+(S.eng.client||"client")+" "+(S.eng.quarter||"")).trim().replace(/[^\w\- ]+/g,"").replace(/\s+/g,"_")+".pptx";
+    if(DL)await DL.save({filename:name,data:blob});else{var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)}$("#export-note").textContent="Saved "+name+".";
+  }catch(err){if(!err||err.code!=="declined")$("#export-note").textContent="Could not create the file"+(err&&err.message?": "+err.message:".")}
+  finally{b.disabled=false}
+});
+
+/* boot */
+S=load();renderForm();update();
+if(window.claude&&window.claude.use){
+  window.claude.use("sample").then(function(s){if(s&&typeof s.json==="function"){SMP=s;var a=$("#ai");if(a)a.hidden=false}},function(){});
+  window.claude.use("downloads").then(function(d){DL=d;exportReady()},function(){exportReady()});
+}
+exportReady();
+</script>
+
+</body></html>
