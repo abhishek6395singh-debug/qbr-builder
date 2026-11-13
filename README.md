@@ -5,6 +5,7 @@ A single-page tool for preparing a client-facing quarterly business review. Fill
 - **Scorecard:** enter target, actual and last quarter for each measure. Met, At risk or Missed is calculated, and the overall Green, Amber or Red is suggested from it.
 - **Sections:** wins, issues and risks, next-quarter milestones, and the decisions you need from the client.
 - **Readiness checks:** about ten checks on the content, such as whether every miss has an explanation, every win has a number, every open issue has an owner, an action and a date, and every decision names who decides and by when.
+- **Templates:** four looks for the preview and the PowerPoint file: Modern (teal), Classic (navy and gold with serif titles), Bold (dark slides, orange accent) and Clean (white and blue). The choice is saved with your data. Fonts in the file are Calibri, Georgia or Arial, so they open on any machine with Office.
 - **Header and footer:** set a header (for example "Confidential"), a footer and whether slide numbers show. They appear on every slide except the title slide, in the preview and in the PowerPoint. A blank footer uses the client name and quarter.
 - **Deck:** a live 16:9 preview, one slide per section, with long lists continuing on extra slides. Download as `.pptx` with your notes in the speaker notes.
 - **Draft with Claude (optional):** when the page is opened inside the Claude artifact viewer, a panel drafts the executive summary and speaker notes from your figures. Numbers in the draft that are not in your data are flagged before you apply it. This panel is hidden everywhere else.
@@ -32,6 +33,7 @@ Tested:
 - the number check on a draft with invented figures and one without
 - a generated `.pptx`, opened and rendered: 7 slides, notes on each, tables and cards intact
 - the Download button saving that file from the standalone page
+- all four templates generated and rendered, and switched in the page without errors
 - the page in Chromium on desktop and phone width, in light and dark, with no console errors
 
 Not tested:
@@ -46,7 +48,7 @@ The number check catches figures that are not in your data. It does not check th
 ## Limits
 
 - Dates and numbers are shown as typed or in a fixed `15 Jan 2027` style. There is no locale handling.
-- The PowerPoint uses Calibri. If it is missing on your machine, PowerPoint substitutes a similar font.
+- The PowerPoint uses Calibri, Georgia or Arial depending on the template. If one is missing on your machine, PowerPoint substitutes a similar font.
 - Data is saved in your browser's local storage only. Clear site data and it is gone.
 
 ## Where to change things
